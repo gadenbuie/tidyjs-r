@@ -11,6 +11,14 @@ output: js4shiny::html_document_js
 
 ```{r setup, include=FALSE}
 tidyjs::use_tidyjs()
+xaringanExtra::use_clipboard(selector = "pre.r,pre.markdown,pre.js")
+```
+
+Install tidyjs from GitHub:
+
+``` r
+# install.packages("remotes")
+remotes::install_github("gadenbuie/tidyjs-r")
 ```
 
 ```{r child="../man/fragments/tidyjs-usage.Rmd"}
