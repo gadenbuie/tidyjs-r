@@ -25,7 +25,7 @@ console.log('Ready to tidy?')
 
 ---
 
-## tidy.js
+## [tidy.js](https://github.com/pbeshai/tidy)
 
 [![CircleCI](https://img.shields.io/circleci/build/gh/pbeshai/tidy)](https://app.circleci.com/pipelines/github/pbeshai/tidy)
 [![npm](https://img.shields.io/npm/v/@tidyjs/tidy)](https://www.npmjs.com/package/@tidyjs/tidy)

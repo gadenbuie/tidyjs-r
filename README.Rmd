@@ -21,6 +21,9 @@ knitr::opts_chunk$set(
 **Tidy up your data with JavaScript** for R users. 
 Bring `tidy.js` to your R Markdown HTML documents or Shiny apps.
 
+Be sure to check out the [tidy.js homepage](https://pbeshai.github.io/tidy) 
+or GitHub repo at [pbeshai/tidy](https://github.com/pbeshai/tidy).
+
 ## Installation
 
 You can install the released version of tidyjs from GitHub:

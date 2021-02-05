@@ -9,6 +9,10 @@
 **Tidy up your data with JavaScript** for R users. Bring `tidy.js` to
 your R Markdown HTML documents or Shiny apps.
 
+Be sure to check out the [tidy.js
+homepage](https://pbeshai.github.io/tidy) or GitHub repo at
+[pbeshai/tidy](https://github.com/pbeshai/tidy).
+
 ## Installation
 
 You can install the released version of tidyjs from GitHub:
@@ -20,10 +24,10 @@ remotes::install_github("gadenbuie/tidyjs-r")
 
 ## Usage
 
-To use in your R Markdown documents, call
+To use `tidy.js` in your R Markdown documents, call
 [use\_tidyjs()](https://github.com/gadenbuie/tidyjs-r/blob/main/R/tidyjs.R).
-You can then use `tidy.js` in your R Markdown document inside a
-JavaScript (`js`) chunk:
+You can then access tidy functions from the `Tidy` object in your Shiny
+App or in your R Markdown document inside a JavaScript (`js`) chunk:
 
 ```` markdown
 ```{r echo=FALSE}
