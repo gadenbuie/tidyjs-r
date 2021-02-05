@@ -1,0 +1,24 @@
+To use in your R Markdown documents, call [use_tidyjs()]. You can then
+use `tidy.js` in your R Markdown document inside a JavaScript (`js`) chunk:
+
+````markdown
+```{r echo=FALSE}`r ''`
+tidyjs::use_tidyjs()
+```
+
+```{js}`r ''`
+const { tidy, mutate, arrange, desc } = Tidy;
+
+const data = [
+  { a: 1, b: 10 }, 
+  { a: 3, b: 12 }, 
+  { a: 2, b: 10 }
+]
+
+const results = tidy(
+  data, 
+  mutate({ ab: d => d.a * d.b }),
+  arrange(desc('ab'))
+)
+```
+````

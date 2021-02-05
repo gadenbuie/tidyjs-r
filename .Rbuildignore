@@ -1,0 +1,7 @@
+^tidyjs\.Rproj$
+^\.Rproj\.user$
+^inst/node_modules$
+^docs$
+^_dev$
+^LICENSE\.md$
+^README\.Rmd$

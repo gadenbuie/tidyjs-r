@@ -1,0 +1,21 @@
+{
+  "name": "tidyjs-r",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "copy:tidy": "cpy 'node_modules/@tidyjs/tidy/dist/umd/tidy.js*' tidyjs/src",
+    "copy:tidymin": "cpy 'node_modules/@tidyjs/tidy/dist/umd/tidy.min.js*' tidyjs/min",
+    "copy:d3-array": "cpy 'node_modules/d3-array/dist/*.js' d3-array",
+    "build": "npm run copy:tidy && npm run copy:tidymin && npm run copy:d3-array"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@tidyjs/tidy": "^2.0.3"
+  },
+  "devDependencies": {
+    "cpy-cli": "^3.1.1"
+  }
+}

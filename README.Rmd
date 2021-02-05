@@ -1,0 +1,40 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# tidyjs
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+**Tidy up your data with JavaScript** for R users. 
+Bring `tidy.js` to your R Markdown HTML documents or Shiny apps.
+
+## Installation
+
+You can install the released version of tidyjs from GitHub:
+
+``` r
+# install.packages("remotes")
+remotes::install_github("gadenbuie/tidyjs-r")
+```
+
+## Usage
+
+[use_tidyjs()]: https://github.com/gadenbuie/tidyjs-r/blob/main/R/tidyjs.R
+
+```{r child="man/fragments/tidyjs-usage.Rmd"}
+```
+
+Check out `tidy.js` in action in the [interactive README](https://pkg.garrickadenbuie/tidyjs-r).

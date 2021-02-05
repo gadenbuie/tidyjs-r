@@ -1,0 +1,30 @@
+Package: tidyjs
+Title: Tidy Data with JavaScript and 'tidy.js'
+Version: 2.0.3
+Authors@R: 
+    c(person(given = "Garrick",
+             family = "Aden-Buie",
+             role = c("aut", "cre"),
+             email = "garrick@adenbuie.com",
+             comment = c(ORCID = "0000-0002-7111-0077")),
+      person(given = "Peter",
+             family = "Beshai",
+             role = "cph",
+             comment = "Author of tidy.js"),
+      person(given = "Mike",
+             family = "Bostock",
+             role = "cph",
+             comment = "Author of d3-array.js"))
+Description: Provides the 'tidy.js' JavaScript package for use
+    in HTML 'R Markdown' document a≥nd 'Shiny' applications.
+License: MIT + file LICENSE
+Imports: 
+    htmltools,
+    jsonlite
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1
