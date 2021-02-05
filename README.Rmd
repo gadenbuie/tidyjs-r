@@ -40,4 +40,4 @@ remotes::install_github("gadenbuie/tidyjs-r")
 ```{r child="man/fragments/tidyjs-usage.Rmd"}
 ```
 
-Check out `tidy.js` in action in the [interactive README](https://pkg.garrickadenbuie/tidyjs-r).
+Check out `tidy.js` in action in the [interactive README](https://pkg.garrickadenbuie.com/tidyjs-r).

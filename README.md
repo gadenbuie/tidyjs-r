@@ -52,4 +52,4 @@ const results = tidy(
 ````
 
 Check out `tidy.js` in action in the [interactive
-README](https://pkg.garrickadenbuie/tidyjs-r).
+README](https://pkg.garrickadenbuie.com/tidyjs-r).
