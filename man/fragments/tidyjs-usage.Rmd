@@ -1,5 +1,6 @@
-To use in your R Markdown documents, call [use_tidyjs()]. You can then
-use `tidy.js` in your R Markdown document inside a JavaScript (`js`) chunk:
+To use `tidy.js` in your R Markdown documents, call [use_tidyjs()]. You can then
+access tidy functions from the `Tidy` object in your Shiny App or in your
+R Markdown document inside a JavaScript (`js`) chunk:
 
 ````markdown
 ```{r echo=FALSE}`r ''`
