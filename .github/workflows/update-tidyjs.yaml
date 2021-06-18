@@ -1,0 +1,70 @@
+on:
+  workflow_dispatch:
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron:  '0 0 * * 1'
+
+jobs:
+  update-tidyjs:
+    runs-on: ubuntu-20.04
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v1
+
+      - name: Setup pandoc
+        uses: r-lib/actions/setup-pandoc@v1
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install packages
+        run: |
+          options(repos = c(
+            RSPM = "https://packagemanager.rstudio.com/all/__linux__/focal/latest",
+            gadenbuie = "https://gadenbuie.r-universe.dev"
+          ))
+          install.packages("pak", repos = "https://r-lib.github.io/p/pak/dev/")
+          pak::pak(c("rmarkdown", "desc", "devtools", "js4shiny", "xaringanExtra"))
+          pak::local_install_deps()
+        shell: Rscript {0}
+
+      - name: Update @tidyjs/tidy
+        run: |
+          cd inst
+          npm install
+          npm update @tidyjs/tidy
+          npm run build
+
+      - name: Update package version
+        run: |
+          devtools::load_all(".")
+          desc::desc_set_version(pkg_lock_deps("@tidyjs/tidy")$version)
+          devtools::document()
+          devtools::install(quick = FALSE)
+        shell: Rscript {0}
+
+      - name: Update documentation
+        run: |
+          rmarkdown::render("README.Rmd")
+          rmarkdown::render("docs/index.Rmd")
+        shell: Rscript {0}
+
+      - name: Get Version
+        run: Rscript -e "cat(sep = '', 'version=', as.character(desc::desc_get_version()))" >> $GITHUB_ENV
+
+      - name: Commit results
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          git add inst
+          git add -u
+          git commit -m "v${{ env.version }}" || echo "No changes to commit"
+          git push origin || echo "No changes"
