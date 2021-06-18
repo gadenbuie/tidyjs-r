@@ -24,8 +24,8 @@ Adds the HTML dependencies required for
 }
 \details{
 To use \code{tidy.js} in your R Markdown documents, call
-\code{\link[=use_tidyjs]{use_tidyjs()}}. You can then access tidy functions from
-the \code{Tidy} object in your Shiny App or in your R Markdown document
+\code{\link[=use_tidyjs]{use_tidyjs()}}. You can then access tidy functions
+from the \code{Tidy} object in your Shiny App or in your R Markdown document
 inside a JavaScript (\code{js}) chunk:\if{html}{\out{<div class="markdown">}}\preformatted{```\{r echo=FALSE\}
 tidyjs::use_tidyjs()
 ```

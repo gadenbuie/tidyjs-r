@@ -10,7 +10,9 @@
     }
     let result = items;
     for (const fn of fns) {
-      result = fn(result);
+      if (fn) {
+        result = fn(result);
+      }
     }
     return result;
   }
@@ -86,7 +88,7 @@
       return items.slice().sort((a, b) => {
         for (const comparator of comparatorFns) {
           const result = comparator(a, b);
-          if (result !== 0)
+          if (result)
             return result;
         }
         return 0;
@@ -95,13 +97,15 @@
     return _arrange;
   }
   function asc(key) {
+    const keyFn = typeof key === "function" ? key : (d) => d[key];
     return function _asc(a, b) {
-      return d3Array.ascending(a[key], b[key]);
+      return emptyAwareComparator(keyFn(a), keyFn(b), false);
     };
   }
   function desc(key) {
+    const keyFn = typeof key === "function" ? key : (d) => d[key];
     return function _desc(a, b) {
-      return d3Array.descending(a[key], b[key]);
+      return emptyAwareComparator(keyFn(a), keyFn(b), true);
     };
   }
   function fixedOrder(key, order, options) {
@@ -127,6 +131,26 @@
       }
       return 0;
     };
+  }
+  function emptyAwareComparator(aInput, bInput, desc2) {
+    let a = desc2 ? bInput : aInput;
+    let b = desc2 ? aInput : bInput;
+    if (isEmpty(a) && isEmpty(b)) {
+      const rankA = a !== a ? 0 : a === null ? 1 : 2;
+      const rankB = b !== b ? 0 : b === null ? 1 : 2;
+      const order = rankA - rankB;
+      return desc2 ? -order : order;
+    }
+    if (isEmpty(a)) {
+      return desc2 ? -1 : 1;
+    }
+    if (isEmpty(b)) {
+      return desc2 ? 1 : -1;
+    }
+    return d3Array.ascending(a, b);
+  }
+  function isEmpty(value) {
+    return value == null || value !== value;
   }
 
   function summarize(summarizeSpec, options) {
@@ -242,10 +266,10 @@
   }
 
   function assignGroupKeys(d, keys) {
-    return {
-      ...d,
-      ...keys.reduce((accum, key) => (accum[key[0]] = key[1], accum), {})
-    };
+    if (d == null || typeof d !== "object" || Array.isArray(d))
+      return d;
+    const keysObj = Object.fromEntries(keys.filter((key) => typeof key[0] !== "function"));
+    return Object.assign(keysObj, d);
   }
 
   function groupTraversal(grouped, outputGrouped, keys, addSubgroup, addLeaves, level = 0) {
@@ -278,6 +302,11 @@
   const identity = (d) => d;
 
   function groupBy(groupKeys, fns, options) {
+    if (typeof fns === "function") {
+      fns = [fns];
+    } else if (arguments.length === 2 && fns != null && !Array.isArray(fns)) {
+      options = fns;
+    }
     const _groupBy = (items) => {
       const grouped = makeGrouped(items, groupKeys);
       const results = runFlow(grouped, fns, options == null ? void 0 : options.addGroupKeys);
@@ -285,13 +314,8 @@
         switch (options.export) {
           case "grouped":
             return results;
-          case "entries":
-            return exportLevels(results, {
-              ...options,
-              export: "levels",
-              levels: ["entries"]
-            });
-          case "entries-object":
+          case "levels":
+            return exportLevels(results, options);
           case "entries-obj":
           case "entriesObject":
             return exportLevels(results, {
@@ -299,32 +323,12 @@
               export: "levels",
               levels: ["entries-object"]
             });
-          case "object":
+          default:
             return exportLevels(results, {
               ...options,
               export: "levels",
-              levels: ["object"]
+              levels: [options.export]
             });
-          case "map":
-            return exportLevels(results, {
-              ...options,
-              export: "levels",
-              levels: ["map"]
-            });
-          case "keys":
-            return exportLevels(results, {
-              ...options,
-              export: "levels",
-              levels: ["keys"]
-            });
-          case "values":
-            return exportLevels(results, {
-              ...options,
-              export: "levels",
-              levels: ["values"]
-            });
-          case "levels":
-            return exportLevels(results, options);
         }
       }
       const ungrouped = ungroup(results, options == null ? void 0 : options.addGroupKeys);
@@ -345,6 +349,8 @@
     if (!(fns == null ? void 0 : fns.length))
       return result;
     for (const fn of fns) {
+      if (!fn)
+        continue;
       result = groupMap(result, (items2, keys) => {
         const context = {groupKeys: keys};
         let leafItemsMapped = fn(items2, context);
@@ -358,12 +364,6 @@
   }
   function makeGrouped(items, groupKeys) {
     const groupKeyFns = singleOrArray(groupKeys).map((key, i) => {
-      let keyName;
-      if (typeof key === "function") {
-        keyName = key.name ? key.name : `group_${i}`;
-      } else {
-        keyName = key.toString();
-      }
       const keyFn = typeof key === "function" ? key : (d) => d[key];
       const keyCache = new Map();
       return (d) => {
@@ -371,7 +371,7 @@
         if (keyCache.has(keyValue)) {
           return keyCache.get(keyValue);
         }
-        const keyWithName = [keyName, keyValue];
+        const keyWithName = [key, keyValue];
         keyCache.set(keyValue, keyWithName);
         return keyWithName;
       };
@@ -393,13 +393,19 @@
   const defaultCompositeKey = (keys) => keys.join("/");
   function processFromGroupsOptions(options) {
     var _a;
-    const {flat, single, mapLeaf = identity, mapLeaves = identity} = options;
+    const {
+      flat,
+      single,
+      mapLeaf = identity,
+      mapLeaves = identity,
+      addGroupKeys
+    } = options;
     let compositeKey;
     if (options.flat) {
       compositeKey = (_a = options.compositeKey) != null ? _a : defaultCompositeKey;
     }
     const groupFn = (values, keys) => {
-      return single ? mapLeaf(assignGroupKeys(values[0], keys)) : mapLeaves(values.map((d) => mapLeaf(assignGroupKeys(d, keys))));
+      return single ? mapLeaf(addGroupKeys === false ? values[0] : assignGroupKeys(values[0], keys)) : mapLeaves(values.map((d) => mapLeaf(addGroupKeys === false ? d : assignGroupKeys(d, keys))));
     };
     const keyFn = flat ? (keys) => compositeKey(keys.map((d) => d[1])) : (keys) => keys[keys.length - 1][1];
     return {groupFn, keyFn};
@@ -415,7 +421,7 @@
         case "entries-object":
         case "entries-obj":
         case "entriesObject": {
-          const levelMapEntry = levelOption === "entries-object" || levelOption === "entries-obj" || levelOption === "entriesObject" ? ([key, values]) => ({key, values}) : mapEntry;
+          const levelMapEntry = (levelOption === "entries-object" || levelOption === "entries-obj" || levelOption === "entriesObject") && options.mapEntry == null ? ([key, values]) => ({key, values}) : mapEntry;
           levelSpecs.push({
             id: "entries",
             createEmptySubgroup: () => [],
@@ -507,82 +513,15 @@
     return (items) => items.length;
   }
 
-  function sum(items, accessor) {
-    let sum2 = 0, correction = 0, temp = 0;
-    for (let i = 0; i < items.length; i++) {
-      let value = accessor === void 0 ? items[i] : accessor(items[i], i, items);
-      if (+value !== value) {
-        value = 0;
-      }
-      if (i === 0) {
-        sum2 = value;
-      } else {
-        temp = sum2 + value;
-        if (Math.abs(sum2) >= Math.abs(value)) {
-          correction += sum2 - temp + value;
-        } else {
-          correction += value - temp + sum2;
-        }
-        sum2 = temp;
-      }
-    }
-    return sum2 + correction;
-  }
-  function cumsum(items, accessor) {
-    let sum2 = 0, correction = 0, temp = 0, cumsums = new Float64Array(items.length);
-    for (let i = 0; i < items.length; i++) {
-      let value = accessor === void 0 ? items[i] : accessor(items[i], i, items);
-      if (+value !== value) {
-        value = 0;
-      }
-      if (i === 0) {
-        sum2 = value;
-      } else {
-        temp = sum2 + value;
-        if (Math.abs(sum2) >= Math.abs(value)) {
-          correction += sum2 - temp + value;
-        } else {
-          correction += value - temp + sum2;
-        }
-        sum2 = temp;
-      }
-      cumsums[i] = sum2 + correction;
-    }
-    return cumsums;
-  }
-  function mean(items, accessor) {
-    let n = 0, sum2 = 0, correction = 0, temp = 0;
-    for (let i = 0; i < items.length; i++) {
-      let value = accessor === void 0 ? items[i] : accessor(items[i], i, items);
-      if (+value !== value) {
-        value = 0;
-      } else {
-        n++;
-      }
-      if (i === 0) {
-        sum2 = value;
-      } else {
-        temp = sum2 + value;
-        if (Math.abs(sum2) >= Math.abs(value)) {
-          correction += sum2 - temp + value;
-        } else {
-          correction += value - temp + sum2;
-        }
-        sum2 = temp;
-      }
-    }
-    return n ? (sum2 + correction) / n : void 0;
-  }
-
-  function sum$1(key) {
+  function sum(key) {
     const keyFn = typeof key === "function" ? key : (d) => d[key];
-    return (items) => sum(items, keyFn);
+    return (items) => d3Array.fsum(items, keyFn);
   }
 
   function tally(options) {
     const _tally = (items) => {
       const {name = "n", wt} = options != null ? options : {};
-      const summarized = summarize({[name]: wt == null ? n() : sum$1(wt)})(items);
+      const summarized = summarize({[name]: wt == null ? n() : sum(wt)})(items);
       return summarized;
     };
     return _tally;
@@ -625,7 +564,7 @@
     return _sliceMin;
   }
   function sliceMax(n, orderBy) {
-    const _sliceMax = (items) => arrange(orderBy)(items).slice(-n).reverse();
+    const _sliceMax = (items) => typeof orderBy === "function" ? arrange(orderBy)(items).slice(-n).reverse() : arrange(desc(orderBy))(items).slice(0, n);
     return _sliceMax;
   }
   function sliceSample(n, options) {
@@ -694,14 +633,57 @@
 
   function leftJoin(itemsToJoin, options) {
     const _leftJoin = (items) => {
+      if (!itemsToJoin.length)
+        return items;
       const byMap = (options == null ? void 0 : options.by) == null ? autodetectByMap(items, itemsToJoin) : makeByMap(options.by);
+      const joinObjectKeys = Object.keys(itemsToJoin[0]);
       const joined = items.flatMap((d) => {
         const matches = itemsToJoin.filter((j) => isMatch(d, j, byMap));
-        return matches.length ? matches.map((j) => ({...d, ...j})) : d;
+        if (matches.length) {
+          return matches.map((j) => ({...d, ...j}));
+        }
+        const undefinedFill = Object.fromEntries(joinObjectKeys.filter((key) => d[key] == null).map((key) => [key, void 0]));
+        return {...d, ...undefinedFill};
       });
       return joined;
     };
     return _leftJoin;
+  }
+
+  function fullJoin(itemsToJoin, options) {
+    const _fullJoin = (items) => {
+      if (!itemsToJoin.length)
+        return items;
+      if (!items.length)
+        return itemsToJoin;
+      const byMap = (options == null ? void 0 : options.by) == null ? autodetectByMap(items, itemsToJoin) : makeByMap(options.by);
+      const matchMap = new Map();
+      const joinObjectKeys = Object.keys(itemsToJoin[0]);
+      const joined = items.flatMap((d) => {
+        const matches = itemsToJoin.filter((j) => {
+          const matched = isMatch(d, j, byMap);
+          if (matched) {
+            matchMap.set(j, true);
+          }
+          return matched;
+        });
+        if (matches.length) {
+          return matches.map((j) => ({...d, ...j}));
+        }
+        const undefinedFill = Object.fromEntries(joinObjectKeys.filter((key) => d[key] == null).map((key) => [key, void 0]));
+        return {...d, ...undefinedFill};
+      });
+      if (matchMap.size < itemsToJoin.length) {
+        const leftEmptyObject = Object.fromEntries(Object.keys(items[0]).map((key) => [key, void 0]));
+        for (const item of itemsToJoin) {
+          if (!matchMap.has(item)) {
+            joined.push({...leftEmptyObject, ...item});
+          }
+        }
+      }
+      return joined;
+    };
+    return _fullJoin;
   }
 
   function mutateWithSummary(mutateSpec) {
@@ -744,7 +726,7 @@
         processedSelectKeys.push(keyInput);
       }
     }
-    if (processedSelectKeys[0][0] === "-") {
+    if (processedSelectKeys.length && processedSelectKeys[0][0] === "-") {
       processedSelectKeys = [...everything()(items), ...processedSelectKeys];
     }
     const negationMap = {};
@@ -767,6 +749,8 @@
   function select(selectKeys) {
     const _select = (items) => {
       let processedSelectKeys = processSelectors(items, selectKeys);
+      if (!processedSelectKeys.length)
+        return items;
       return items.map((d) => {
         const mapped = {};
         for (const key of processedSelectKeys) {
@@ -983,7 +967,11 @@
     let value = new Date(min);
     while (value <= max) {
       sequence.push(new Date(value));
-      if (granularity === "day" || granularity === "d" || granularity === "days") {
+      if (granularity === "second" || granularity === "s" || granularity === "seconds") {
+        value.setUTCSeconds(value.getUTCSeconds() + 1 * period);
+      } else if (granularity === "minute" || granularity === "min" || granularity === "minutes") {
+        value.setUTCMinutes(value.getUTCMinutes() + 1 * period);
+      } else if (granularity === "day" || granularity === "d" || granularity === "days") {
         value.setUTCDate(value.getUTCDate() + 1 * period);
       } else if (granularity === "week" || granularity === "w" || granularity === "weeks") {
         value.setUTCDate(value.getUTCDate() + 7 * period);
@@ -1093,10 +1081,18 @@
   function rate(numerator, denominator, allowDivideByZero) {
     return numerator == null || denominator == null ? void 0 : denominator === 0 && numerator === 0 ? 0 : !allowDivideByZero && denominator === 0 ? void 0 : numerator / denominator;
   }
+  function subtract(a, b, nullyZero) {
+    return a == null || b == null ? nullyZero ? (a != null ? a : 0) - (b != null ? b : 0) : void 0 : a - b;
+  }
+  function add(a, b, nullyZero) {
+    return a == null || b == null ? nullyZero ? (a != null ? a : 0) + (b != null ? b : 0) : void 0 : a + b;
+  }
 
   var math = /*#__PURE__*/Object.freeze({
     __proto__: null,
-    rate: rate
+    rate: rate,
+    subtract: subtract,
+    add: add
   });
 
   function rate$1(numerator, denominator, options) {
@@ -1116,9 +1112,24 @@
     };
   }
 
-  function cumsum$1(key) {
+  function fcumsum(items, accessor) {
+    let sum = new d3Array.Adder(), i = 0;
+    return Float64Array.from(items, (value) => sum.add(+(accessor(value, i++, items) || 0)));
+  }
+  function mean(items, accessor) {
+    let n = 0;
+    for (let i = 0; i < items.length; ++i) {
+      const value = accessor(items[i], i, items);
+      if (+value === value) {
+        n += 1;
+      }
+    }
+    return n ? d3Array.fsum(items, accessor) / n : void 0;
+  }
+
+  function cumsum(key) {
     const keyFn = typeof key === "function" ? key : (d) => d[key];
-    return (items) => cumsum(items, keyFn);
+    return (items) => fcumsum(items, keyFn);
   }
 
   function roll(width, rollFn, options) {
@@ -1132,6 +1143,28 @@
         const startIndex = Math.max(0, endIndex - width + 1);
         const itemsInWindow = items.slice(startIndex, endIndex + 1);
         return rollFn(itemsInWindow, endIndex);
+      });
+    };
+  }
+
+  function lag(key, options) {
+    const keyFn = typeof key === "function" ? key : (d) => d[key];
+    const {n = 1, default: defaultValue} = options != null ? options : {};
+    return (items) => {
+      return items.map((_, i) => {
+        const lagItem = items[i - n];
+        return lagItem == null ? defaultValue : keyFn(lagItem);
+      });
+    };
+  }
+
+  function lead(key, options) {
+    const keyFn = typeof key === "function" ? key : (d) => d[key];
+    const {n = 1, default: defaultValue} = options != null ? options : {};
+    return (items) => {
+      return items.map((_, i) => {
+        const leadItem = items[i + n];
+        return leadItem == null ? defaultValue : keyFn(leadItem);
       });
     };
   }
@@ -1155,8 +1188,8 @@
     const numeratorFn = typeof numerator === "function" ? numerator : (d) => d[numerator];
     const denominatorFn = typeof denominator === "function" ? denominator : (d) => d[denominator];
     return (items) => {
-      const numerator2 = sum(items, numeratorFn);
-      const denominator2 = sum(items, denominatorFn);
+      const numerator2 = d3Array.fsum(items, numeratorFn);
+      const denominator2 = d3Array.fsum(items, denominatorFn);
       return rate(numerator2, denominator2);
     };
   }
@@ -1176,14 +1209,33 @@
     return (items) => d3Array.variance(items, keyFn);
   }
 
+  function nDistinct(key, options = {}) {
+    const keyFn = typeof key === "function" ? key : (d) => d[key];
+    return (items) => {
+      const uniques = new Map();
+      let count = 0;
+      for (const item of items) {
+        const value = keyFn(item);
+        if (!uniques.has(value)) {
+          if (!options.includeUndefined && value === void 0 || options.includeNull === false && value === null) {
+            continue;
+          }
+          count += 1;
+          uniques.set(value, true);
+        }
+      }
+      return count;
+    };
+  }
+
   function first(key) {
     const keyFn = typeof key === "function" ? key : (d) => d[key];
-    return (items) => keyFn(items[0]);
+    return (items) => items.length ? keyFn(items[0]) : void 0;
   }
 
   function last(key) {
     const keyFn = typeof key === "function" ? key : (d) => d[key];
-    return (items) => keyFn(items[items.length - 1]);
+    return (items) => items.length ? keyFn(items[items.length - 1]) : void 0;
   }
 
   function startsWith(prefix, ignoreCase = true) {
@@ -1255,7 +1307,7 @@
   exports.complete = complete;
   exports.contains = contains;
   exports.count = count;
-  exports.cumsum = cumsum$1;
+  exports.cumsum = cumsum;
   exports.debug = debug;
   exports.desc = desc;
   exports.deviation = deviation;
@@ -1267,12 +1319,15 @@
   exports.filter = filter;
   exports.first = first;
   exports.fixedOrder = fixedOrder;
+  exports.fullJoin = fullJoin;
   exports.fullSeq = fullSeq;
   exports.fullSeqDate = fullSeqDate;
   exports.fullSeqDateISOString = fullSeqDateISOString;
   exports.groupBy = groupBy;
   exports.innerJoin = innerJoin;
+  exports.lag = lag;
   exports.last = last;
+  exports.lead = lead;
   exports.leftJoin = leftJoin;
   exports.map = map;
   exports.matches = matches;
@@ -1284,6 +1339,7 @@
   exports.mutate = mutate;
   exports.mutateWithSummary = mutateWithSummary;
   exports.n = n;
+  exports.nDistinct = nDistinct;
   exports.negate = negate;
   exports.numRange = numRange;
   exports.pick = select;
@@ -1302,7 +1358,7 @@
   exports.sliceTail = sliceTail;
   exports.sort = arrange;
   exports.startsWith = startsWith;
-  exports.sum = sum$1;
+  exports.sum = sum;
   exports.summarize = summarize;
   exports.summarizeAll = summarizeAll;
   exports.summarizeAt = summarizeAt;
