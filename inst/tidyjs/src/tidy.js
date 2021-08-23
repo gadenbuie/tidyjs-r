@@ -368,11 +368,12 @@
       const keyCache = new Map();
       return (d) => {
         const keyValue = keyFn(d);
-        if (keyCache.has(keyValue)) {
-          return keyCache.get(keyValue);
+        const keyValueOf = typeof keyValue === "object" ? keyValue.valueOf() : keyValue;
+        if (keyCache.has(keyValueOf)) {
+          return keyCache.get(keyValueOf);
         }
         const keyWithName = [key, keyValue];
-        keyCache.set(keyValue, keyWithName);
+        keyCache.set(keyValueOf, keyWithName);
         return keyWithName;
       };
     });
