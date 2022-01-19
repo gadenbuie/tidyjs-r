@@ -16,7 +16,7 @@ Authors@R:
              role = "cph",
              comment = "Author of d3-array.js"))
 Description: Provides the 'tidy.js' JavaScript package for use
-    in HTML 'R Markdown' document a≥nd 'Shiny' applications.
+    in HTML 'R Markdown' document and 'Shiny' applications.
 License: MIT + file LICENSE
 URL: https://github.com/gadenbuie/tidyjs-r
 BugReports: https://github.com/gadenbuie/tidyjs-r/issues
