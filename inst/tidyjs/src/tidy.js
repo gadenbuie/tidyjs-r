@@ -84,7 +84,7 @@
 
   function arrange(comparators) {
     const _arrange = (items) => {
-      const comparatorFns = singleOrArray(comparators).map((comp) => typeof comp === "function" ? comp : asc(comp));
+      const comparatorFns = singleOrArray(comparators).map((comp) => typeof comp === "function" ? comp.length === 1 ? asc(comp) : comp : asc(comp));
       return items.slice().sort((a, b) => {
         for (const comparator of comparatorFns) {
           const result = comparator(a, b);
@@ -301,6 +301,11 @@
 
   const identity = (d) => d;
 
+  function isObject(obj) {
+    const type = typeof obj;
+    return obj != null && (type === "object" || type === "function");
+  }
+
   function groupBy(groupKeys, fns, options) {
     if (typeof fns === "function") {
       fns = [fns];
@@ -368,7 +373,7 @@
       const keyCache = new Map();
       return (d) => {
         const keyValue = keyFn(d);
-        const keyValueOf = typeof keyValue === "object" ? keyValue.valueOf() : keyValue;
+        const keyValueOf = isObject(keyValue) ? keyValue.valueOf() : keyValue;
         if (keyCache.has(keyValueOf)) {
           return keyCache.get(keyValueOf);
         }

@@ -6,11 +6,9 @@
 \alias{tidyjs-package}
 \title{tidyjs: Tidy Data with JavaScript and 'tidy.js'}
 \description{
-Provides the 'tidy.js' JavaScript package for use
-    in HTML 'R Markdown' document a≥nd 'Shiny' applications.
+Provides the 'tidy.js' JavaScript package for use in HTML 'R Markdown' document a≥nd 'Shiny' applications.
 
-Provides the 'tidy.js' JavaScript package for use
-    in HTML 'R Markdown' document a≥nd 'Shiny' applications.
+Provides the 'tidy.js' JavaScript package for use in HTML 'R Markdown' document a≥nd 'Shiny' applications.
 }
 \section{Usage}{
 
