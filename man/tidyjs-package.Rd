@@ -43,14 +43,5 @@ Other contributors:
   \item Mike Bostock (Author of d3-array.js) [copyright holder]
 }
 
-
-\strong{Maintainer}: Garrick Aden-Buie \email{garrick@adenbuie.com} (\href{https://orcid.org/0000-0002-7111-0077}{ORCID})
-
-Other contributors:
-\itemize{
-  \item Peter Beshai (Author of tidy.js) [copyright holder]
-  \item Mike Bostock (Author of d3-array.js) [copyright holder]
-}
-
 }
 \keyword{internal}
