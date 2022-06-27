@@ -1139,11 +1139,12 @@
   }
 
   function roll(width, rollFn, options) {
-    const {partial = false} = options != null ? options : {};
+    const {partial = false, align = "right"} = options != null ? options : {};
+    const halfWidth = Math.floor(width / 2);
     return (items) => {
       return items.map((_, i) => {
-        const endIndex = i;
-        if (!partial && endIndex - width + 1 < 0) {
+        const endIndex = align === "right" ? i : align === "center" ? i + halfWidth : i + width - 1;
+        if (!partial && (endIndex - width + 1 < 0 || endIndex >= items.length)) {
           return void 0;
         }
         const startIndex = Math.max(0, endIndex - width + 1);
