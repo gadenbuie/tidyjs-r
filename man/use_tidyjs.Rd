@@ -51,11 +51,11 @@ const results = tidy(
 }
 \section{Functions}{
 \itemize{
-\item \code{use_tidyjs}: Add the \code{tidy.js} and dependencies to your document
+\item \code{use_tidyjs()}: Add the \code{tidy.js} and dependencies to your document
 or app
 
-\item \code{html_dependency_tidyjs}: The \code{tidy.js} dependency
+\item \code{html_dependency_tidyjs()}: The \code{tidy.js} dependency
 
-\item \code{html_dependency_d3_array}: The \code{d3-array} dependency
+\item \code{html_dependency_d3_array()}: The \code{d3-array} dependency
+
 }}
-
