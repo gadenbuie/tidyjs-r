@@ -1,6 +1,6 @@
 Package: tidyjs
 Title: Tidy Data with JavaScript and 'tidy.js'
-Version: 2.4.6
+Version: 2.5.1
 Authors@R: 
     c(person(given = "Garrick",
              family = "Aden-Buie",

@@ -217,15 +217,15 @@
 
   function mutate(mutateSpec) {
     const _mutate = (items) => {
-      const mutatedItems = [];
-      for (const item of items) {
-        const mutatedItem = {...item};
+      const mutatedItems = items.map((d) => ({...d}));
+      let i = 0;
+      for (const mutatedItem of mutatedItems) {
         for (const key in mutateSpec) {
           const mutateSpecValue = mutateSpec[key];
-          const mutatedResult = typeof mutateSpecValue === "function" ? mutateSpecValue(mutatedItem) : mutateSpecValue;
+          const mutatedResult = typeof mutateSpecValue === "function" ? mutateSpecValue(mutatedItem, i, mutatedItems) : mutateSpecValue;
           mutatedItem[key] = mutatedResult;
         }
-        mutatedItems.push(mutatedItem);
+        ++i;
       }
       return mutatedItems;
     };
@@ -515,12 +515,21 @@
     return groupTraversal(grouped, initialOutputObject, [], addSubgroup, addLeaf);
   }
 
-  function n() {
+  function n(options) {
+    if (options == null ? void 0 : options.predicate) {
+      const predicate = options.predicate;
+      return (items) => items.reduce((n2, d, i) => predicate(d, i, items) ? n2 + 1 : n2, 0);
+    }
     return (items) => items.length;
   }
 
-  function sum(key) {
-    const keyFn = typeof key === "function" ? key : (d) => d[key];
+  function sum(key, options) {
+    let keyFn = typeof key === "function" ? key : (d) => d[key];
+    if (options == null ? void 0 : options.predicate) {
+      const originalKeyFn = keyFn;
+      const predicate = options.predicate;
+      keyFn = (d, index, array) => predicate(d, index, array) ? originalKeyFn(d, index, array) : 0;
+    }
     return (items) => d3Array.fsum(items, keyFn);
   }
 
@@ -1105,15 +1114,15 @@
     const numeratorFn = typeof numerator === "function" ? numerator : (d) => d[numerator];
     const denominatorFn = typeof denominator === "function" ? denominator : (d) => d[denominator];
     const {predicate, allowDivideByZero} = options != null ? options : {};
-    return predicate == null ? (d) => {
-      const denom = denominatorFn(d);
-      const numer = numeratorFn(d);
+    return predicate == null ? (d, index, array) => {
+      const denom = denominatorFn(d, index, array);
+      const numer = numeratorFn(d, index, array);
       return rate(numer, denom, allowDivideByZero);
-    } : (d) => {
-      if (!predicate(d))
+    } : (d, index, array) => {
+      if (!predicate(d, index, array))
         return void 0;
-      const denom = denominatorFn(d);
-      const numer = numeratorFn(d);
+      const denom = denominatorFn(d, index, array);
+      const numer = numeratorFn(d, index, array);
       return rate(numer, denom, allowDivideByZero);
     };
   }
@@ -1160,7 +1169,7 @@
     return (items) => {
       return items.map((_, i) => {
         const lagItem = items[i - n];
-        return lagItem == null ? defaultValue : keyFn(lagItem);
+        return lagItem == null ? defaultValue : keyFn(lagItem, i, items);
       });
     };
   }
@@ -1171,8 +1180,16 @@
     return (items) => {
       return items.map((_, i) => {
         const leadItem = items[i + n];
-        return leadItem == null ? defaultValue : keyFn(leadItem);
+        return leadItem == null ? defaultValue : keyFn(leadItem, i, items);
       });
+    };
+  }
+
+  function rowNumber(options) {
+    var _a;
+    const startAt = (_a = options == null ? void 0 : options.startAt) != null ? _a : 0;
+    return (items) => {
+      return items.map((_, i) => i + startAt);
     };
   }
 
@@ -1221,8 +1238,9 @@
     return (items) => {
       const uniques = new Map();
       let count = 0;
+      let i = 0;
       for (const item of items) {
-        const value = keyFn(item);
+        const value = keyFn(item, i++, items);
         if (!uniques.has(value)) {
           if (!options.includeUndefined && value === void 0 || options.includeNull === false && value === null) {
             continue;
@@ -1356,6 +1374,7 @@
   exports.rename = rename;
   exports.replaceNully = replaceNully;
   exports.roll = roll;
+  exports.rowNumber = rowNumber;
   exports.select = select;
   exports.slice = slice;
   exports.sliceHead = sliceHead;
