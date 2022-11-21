@@ -13,7 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@tidyjs/tidy": "^2.5.1"
+    "@tidyjs/tidy": "^2.5.2"
   },
   "devDependencies": {
     "cpy-cli": "^3.1.1"

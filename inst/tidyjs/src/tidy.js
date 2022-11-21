@@ -268,7 +268,7 @@
   function assignGroupKeys(d, keys) {
     if (d == null || typeof d !== "object" || Array.isArray(d))
       return d;
-    const keysObj = Object.fromEntries(keys.filter((key) => typeof key[0] !== "function"));
+    const keysObj = Object.fromEntries(keys.filter((key) => typeof key[0] !== "function" && key[0] != null));
     return Object.assign(keysObj, d);
   }
 
