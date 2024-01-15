@@ -2,7 +2,6 @@
 % Please edit documentation in R/tidyjs-package.R, R/tidyjs.R
 \docType{package}
 \name{tidyjs-package}
-\alias{tidyjs}
 \alias{tidyjs-package}
 \title{tidyjs: Tidy Data with JavaScript and 'tidy.js'}
 \description{
